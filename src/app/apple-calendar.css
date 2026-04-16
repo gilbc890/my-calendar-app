@@ -1,0 +1,58 @@
+/* 전체 캘린더 박스 */
+.apple-calendar {
+  width: 100%;
+  border: none !important;
+  background: white;
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+/* 요일 헤더 */
+.apple-calendar .react-calendar__month-view__weekdays {
+  text-transform: none;
+  font-weight: 500;
+  color: #8e8e93;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* 날짜 칸 */
+.apple-calendar .react-calendar__tile {
+  height: 48px;
+  border-radius: 12px;
+  font-size: 16px;
+  color: #1c1c1e;
+}
+
+/* hover */
+.apple-calendar .react-calendar__tile:hover {
+  background: #f2f2f7;
+  border-radius: 12px;
+}
+
+/* 오늘 날짜 (애플 파란색 동그라미) */
+.apple-calendar .react-calendar__tile--now {
+  background: #007aff !important;
+  color: white !important;
+  border-radius: 12px;
+}
+
+/* 선택한 날짜 (애플 회색 동그라미) */
+.apple-calendar .react-calendar__tile--active {
+  background: #e5e5ea !important;
+  color: #1c1c1e !important;
+  border-radius: 12px;
+}
+
+/* 네비게이션 (월 이동 버튼) */
+.apple-calendar .react-calendar__navigation button {
+  color: #1c1c1e;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.apple-calendar .react-calendar__navigation button:hover {
+  background: #f2f2f7;
+  border-radius: 8px;
+}
