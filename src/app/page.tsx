@@ -34,7 +34,6 @@ export default function Home() {
   const [memos, setMemos] = useState<Record<string, MemoData>>({});
   const [recipes, setRecipes] = useState<Recipe[]>([]);
 
-  // 메모/레시피 불러오기
   useEffect(() => {
     const savedMemos = localStorage.getItem("memos");
     if (savedMemos) setMemos(JSON.parse(savedMemos));
@@ -45,6 +44,7 @@ export default function Home() {
 
   const handleDayClick = (selectedDate: Date) => {
     setDate(selectedDate);
+
     const key = selectedDate.toISOString().split("T")[0];
     const memo = memos[key];
 
@@ -78,10 +78,20 @@ export default function Home() {
   const hasMemo = !!memos[key];
 
   return (
-    <div style={{ padding: 20, maxWidth: 420, margin: "0 auto" }}>
-      <h1 style={{ textAlign: "center", marginBottom: 20 }}>My Recipe Calendar</h1>
+    <div
+      style={{
+        padding: 20,
+        maxWidth: 420,
+        margin: "0 auto",
+        minHeight: "100vh",
+        background: "var(--bg)",
+        color: "var(--text)",
+      }}
+    >
+      <h1 style={{ textAlign: "center", marginBottom: 20 }}>
+        My Recipe Calendar
+      </h1>
 
-      {/* 오른쪽 아래 레시피 관리 버튼 (레시피 페이지로 이동) */}
       <button
         onClick={() => router.push("/recipes")}
         style={{
@@ -98,9 +108,6 @@ export default function Home() {
           cursor: "pointer",
           boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
           zIndex: 999,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
         }}
       >
         ➕
@@ -109,7 +116,6 @@ export default function Home() {
       <Calendar
         onClickDay={handleDayClick}
         value={date}
-        className="apple-calendar"
         tileContent={({ date }) => {
           const key = date.toISOString().split("T")[0];
           const memo = memos[key];
@@ -132,7 +138,6 @@ export default function Home() {
         }}
       />
 
-      {/* 보기/추가 모달 */}
       {open && (
         <div
           style={{
@@ -148,7 +153,8 @@ export default function Home() {
         >
           <div
             style={{
-              background: "white",
+              background: "var(--modal-bg)",
+              color: "var(--modal-text)",
               padding: 20,
               borderRadius: 12,
               width: "80%",
@@ -162,7 +168,6 @@ export default function Home() {
               <>
                 {hasMemo ? (
                   <>
-                    {/* 레시피 이름 클릭 → 상세 페이지로 이동 */}
                     <p
                       style={{
                         cursor: "pointer",
@@ -171,8 +176,10 @@ export default function Home() {
                       }}
                       onClick={() => {
                         const memo = memos[key];
-                        if (!memo) return;
-                        router.push(`/recipe/${encodeURIComponent(memo.recipeName)}`);
+                        if (!memo || !memo.recipeName) return;
+                        router.push(
+                          `/recipe/${encodeURIComponent(memo.recipeName)}`
+                        );
                       }}
                     >
                       🍱 레시피: {memos[key].recipeName}
@@ -237,7 +244,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* 레시피 선택 모달 */}
       {recipeSelectOpen && (
         <div
           style={{
@@ -253,7 +259,8 @@ export default function Home() {
         >
           <div
             style={{
-              background: "white",
+              background: "var(--modal-bg)",
+              color: "var(--modal-text)",
               padding: 20,
               borderRadius: 12,
               width: "80%",
@@ -264,7 +271,7 @@ export default function Home() {
             <h3 style={{ marginBottom: 10 }}>레시피 선택</h3>
 
             {recipes.length === 0 && (
-              <p style={{ color: "#8e8e93" }}>등록된 레시피가 없습니다.</p>
+              <p style={{ color: "#888" }}>등록된 레시피가 없습니다.</p>
             )}
 
             {recipes.map((r) => (
