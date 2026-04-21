@@ -6,16 +6,21 @@ import dynamic from "next/dynamic";
 import "react-calendar/dist/Calendar.css";
 import "./apple-calendar.css";
 
+import { getAllMemos, getMemo, saveMemo } from "@/firebase/calendar";
+import { getAllRecipes } from "@/firebase/recipe";
+
+type MemoData = {
+  recipeId: string;
+  recipeName: string;
+  todo: string;
+};
+
 type Recipe = {
+  id: string;
   name: string;
   thumbnail?: string;
   ingredients?: string;
   description?: string;
-};
-
-type MemoData = {
-  recipeName: string;
-  todo: string;
 };
 
 const Calendar = dynamic(() => import("react-calendar"), { ssr: false });
@@ -28,30 +33,45 @@ export default function Home() {
   const [mode, setMode] = useState<"view" | "add">("view");
   const [recipeSelectOpen, setRecipeSelectOpen] = useState(false);
 
+  const [recipeId, setRecipeId] = useState("");   // 🔥 추가
   const [recipeName, setRecipeName] = useState("");
   const [todo, setTodo] = useState("");
 
   const [memos, setMemos] = useState<Record<string, MemoData>>({});
   const [recipes, setRecipes] = useState<Recipe[]>([]);
 
+  // 🔥 Firebase에서 전체 메모 + 레시피 불러오기
   useEffect(() => {
-    const savedMemos = localStorage.getItem("memos");
-    if (savedMemos) setMemos(JSON.parse(savedMemos));
+    const load = async () => {
+      const memoData = await getAllMemos();
+      setMemos(memoData);
 
-    const savedRecipes = localStorage.getItem("recipes");
-    if (savedRecipes) setRecipes(JSON.parse(savedRecipes));
+      const recipeData = await getAllRecipes();
+
+      // 🔥 id 포함해서 배열로 변환
+      const list = Object.entries(recipeData).map(([id, recipe]: any) => ({
+        id,
+        ...recipe,
+      }));
+
+      setRecipes(list);
+    };
+    load();
   }, []);
 
-  const handleDayClick = (selectedDate: Date) => {
+  // 🔥 날짜 클릭 → Firebase에서 해당 날짜 메모 불러오기
+  const handleDayClick = async (selectedDate: Date) => {
     setDate(selectedDate);
 
     const key = selectedDate.toISOString().split("T")[0];
-    const memo = memos[key];
+    const memo = await getMemo(key);
 
     if (memo) {
+      setRecipeId(memo.recipeId);
       setRecipeName(memo.recipeName);
       setTodo(memo.todo);
     } else {
+      setRecipeId("");
       setRecipeName("");
       setTodo("");
     }
@@ -60,16 +80,23 @@ export default function Home() {
     setOpen(true);
   };
 
-  const handleSave = () => {
+  // 🔥 저장 → Firebase에 저장
+  const handleSave = async () => {
     const key = date.toISOString().split("T")[0];
 
-    const newMemos = {
-      ...memos,
-      [key]: { recipeName, todo },
-    };
+    const newMemo = { recipeId, recipeName, todo };
 
-    setMemos(newMemos);
-    localStorage.setItem("memos", JSON.stringify(newMemos));
+    await saveMemo(key, {
+      recipeId,
+      recipeName,
+      todo,
+    });
+
+    // 화면 즉시 반영
+    setMemos({
+      ...memos,
+      [key]: newMemo,
+    });
 
     setMode("view");
   };
@@ -92,8 +119,9 @@ export default function Home() {
         My Recipe Calendar
       </h1>
 
+      {/* 레시피 관리 버튼 */}
       <button
-        onClick={() => router.push("/recipes")}
+        onClick={() => router.push("/recipe")}
         style={{
           position: "fixed",
           bottom: 20,
@@ -113,6 +141,7 @@ export default function Home() {
         ➕
       </button>
 
+      {/* 🔥 캘린더 tileContent → Firebase 데이터 표시 */}
       <Calendar
         onClickDay={handleDayClick}
         value={date}
@@ -138,6 +167,7 @@ export default function Home() {
         }}
       />
 
+      {/* 🔥 날짜 모달 */}
       {open && (
         <div
           style={{
@@ -176,14 +206,22 @@ export default function Home() {
                       }}
                       onClick={() => {
                         const memo = memos[key];
-                        if (!memo || !memo.recipeName) return;
-                        router.push(
-                          `/recipe/${encodeURIComponent(memo.recipeName)}`
-                        );
+                        console.log("memo click:", memo);
+
+                        if (!memo) return;
+
+                        // recipeId가 없으면 일단 경고라도 띄우자
+                        if (!memo.recipeId) {
+                          alert("이 메모에는 recipeId가 저장되어 있지 않습니다.");
+                          return;
+                        }
+
+                        router.push(`/recipe/${memo.recipeId}`);
                       }}
                     >
                       🍱 레시피: {memos[key].recipeName}
                     </p>
+
                     <p>📝 할 일: {memos[key].todo}</p>
                   </>
                 ) : (
@@ -244,6 +282,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* 🔥 레시피 선택 모달 */}
       {recipeSelectOpen && (
         <div
           style={{
@@ -276,7 +315,7 @@ export default function Home() {
 
             {recipes.map((r) => (
               <div
-                key={r.name}
+                key={r.id}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -285,6 +324,7 @@ export default function Home() {
                 }}
                 onClick={() => {
                   setRecipeName(r.name);
+                  setRecipeId(r.id);   // 🔥 이제 정상 작동
                   setRecipeSelectOpen(false);
                   setMode("add");
                 }}

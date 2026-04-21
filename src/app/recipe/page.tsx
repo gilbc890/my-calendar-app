@@ -1,204 +1,121 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getAllRecipes, deleteRecipe } from "@/firebase/recipe";
 
-type Recipe = {
-  name: string;
-  thumbnail?: string;
-  ingredients?: string;
-  description?: string;
-};
+export default function RecipeListPage() {
+  const router = useRouter();
+  const [recipes, setRecipes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default function RecipesPage() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [name, setName] = useState("");
-  const [thumbnail, setThumbnail] = useState("");
-  const [ingredients, setIngredients] = useState("");
-  const [description, setDescription] = useState("");
-
-  // 처음 로드 시 localStorage에서 불러오기
   useEffect(() => {
-    const saved = localStorage.getItem("recipes");
-    if (saved) {
-      try {
-        setRecipes(JSON.parse(saved));
-      } catch {
-        setRecipes([]);
-      }
-    }
-  }, []);
+    const load = async () => {
+      const data = await getAllRecipes();
 
-  // 레시피 추가
-  const handleAdd = () => {
-    if (!name.trim()) {
-      alert("레시피 이름은 필수입니다.");
-      return;
-    }
+      const list = Object.entries(data).map(([id, recipe]: any) => ({
+        id,
+        ...recipe,
+      }));
 
-    const newRecipe: Recipe = {
-      name: name.trim(),
-      thumbnail: thumbnail.trim() || undefined,
-      ingredients: ingredients.trim() || undefined,
-      description: description.trim() || undefined,
+      setRecipes(list);
+      setLoading(false);
     };
 
-    const updated = [...recipes, newRecipe];
+    load();
+  }, []);
 
-    localStorage.setItem("recipes", JSON.stringify(updated));
-    setRecipes(updated);
+  const handleDelete = async (id: string) => {
+    if (!confirm("정말 삭제할까요?")) return;
 
-    setName("");
-    setThumbnail("");
-    setIngredients("");
-    setDescription("");
+    await deleteRecipe(id);
+
+    setRecipes((prev) => prev.filter((r) => r.id !== id));
   };
 
-  // 레시피 삭제
-  const handleDelete = (recipeName: string) => {
-    const updated = recipes.filter((r) => r.name !== recipeName);
-    setRecipes(updated);
-    localStorage.setItem("recipes", JSON.stringify(updated));
-  };
+  if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
 
   return (
-    <div style={{ padding: 20, maxWidth: 480, margin: "0 auto" }}>
-      <h1 style={{ marginBottom: 16 }}>레시피 등록</h1>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>레시피 이름 *</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="예: 김치찌개"
-          style={{
-            width: "100%",
-            padding: 8,
-            marginTop: 4,
-            borderRadius: 8,
-            border: "1px solid #ccc",
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>썸네일 이미지 URL (선택)</label>
-        <input
-          value={thumbnail}
-          onChange={(e) => setThumbnail(e.target.value)}
-          placeholder="이미지 주소"
-          style={{
-            width: "100%",
-            padding: 8,
-            marginTop: 4,
-            borderRadius: 8,
-            border: "1px solid #ccc",
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>재료 (선택)</label>
-        <textarea
-          value={ingredients}
-          onChange={(e) => setIngredients(e.target.value)}
-          placeholder="예: 돼지고기, 김치, 대파..."
-          style={{
-            width: "100%",
-            padding: 8,
-            marginTop: 4,
-            borderRadius: 8,
-            border: "1px solid #ccc",
-            minHeight: 60,
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>설명 (선택)</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="레시피 설명"
-          style={{
-            width: "100%",
-            padding: 8,
-            marginTop: 4,
-            borderRadius: 8,
-            border: "1px solid #ccc",
-            minHeight: 80,
-          }}
-        />
-      </div>
-
+    <div style={{ padding: 20 }}>
+      {/* 🔙 캘린더로 돌아가기 */}
       <button
-        onClick={handleAdd}
+        onClick={() => router.push("/")}
         style={{
-          width: "100%",
-          padding: 10,
-          background: "#7A3FFF",
-          color: "white",
-          border: "none",
-          borderRadius: 8,
-          cursor: "pointer",
           marginBottom: 20,
+          padding: "8px 12px",
+          borderRadius: 8,
+          border: "1px solid #ccc",
+          background: "white",
+          cursor: "pointer",
         }}
       >
-        레시피 저장
+        ← 캘린더로 돌아가기
       </button>
 
-      <h2 style={{ marginBottom: 8 }}>등록된 레시피</h2>
+      <h2 style={{ marginBottom: 20 }}>레시피 목록</h2>
 
-      {recipes.length === 0 && (
-        <p style={{ color: "#888" }}>아직 등록된 레시피가 없습니다.</p>
-      )}
+      <button
+        onClick={() => router.push("/recipe/add")}
+        style={{
+          marginBottom: 20,
+          padding: "10px 14px",
+          borderRadius: 8,
+          border: "none",
+          background: "#7A3FFF",
+          color: "white",
+          cursor: "pointer",
+          width: "100%",
+        }}
+      >
+        ➕ 레시피 추가
+      </button>
+
+      {recipes.length === 0 && <p>등록된 레시피가 없습니다.</p>}
 
       {recipes.map((r) => (
         <div
-          key={r.name}
+          key={r.id}
           style={{
             display: "flex",
-            alignItems: "center",
             justifyContent: "space-between",
-            padding: "8px 0",
-            borderBottom: "1px solid rgba(0,0,0,0.1)",
+            alignItems: "center",
+            padding: "12px 14px",
+            borderRadius: 10,
+            background: "var(--modal-bg)",
+            color: "var(--modal-text)",
+            marginBottom: 12,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {r.thumbnail && (
-              <img
-                src={r.thumbnail}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 8,
-                  objectFit: "cover",
-                  marginRight: 10,
-                }}
-              />
-            )}
-            <div>
-              <div style={{ fontWeight: 600 }}>{r.name}</div>
-              {r.ingredients && (
-                <div style={{ fontSize: 12, color: "#888" }}>
-                  {r.ingredients.slice(0, 30)}
-                  {r.ingredients.length > 30 ? "..." : ""}
-                </div>
-              )}
-            </div>
+          {/* 레시피 이름 클릭 → 상세페이지 */}
+          <div
+            onClick={() => router.push(`/recipe/${r.id}`)}
+            style={{
+              cursor: "pointer",
+              fontWeight: 600,
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {r.name}
           </div>
 
           {/* 삭제 버튼 */}
           <button
-            onClick={() => handleDelete(r.name)}
+            onClick={() => handleDelete(r.id)}
             style={{
-              background: "transparent",
+              marginLeft: 10,
+              padding: "6px 10px",
+              borderRadius: 6,
               border: "none",
-              color: "#ff3b30",
-              fontSize: 20,
+              background: "#FF4D4D",
+              color: "white",
               cursor: "pointer",
             }}
           >
-            ❌
+            삭제
           </button>
         </div>
       ))}
