@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useState, useEffect } from "react";
+import { auth, login, logout } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import "react-calendar/dist/Calendar.css";
 import "./apple-calendar.css";
-
 import { getAllMemos, getMemo, saveMemo } from "@/firebase/calendar";
 import { getAllRecipes } from "@/firebase/recipe";
 
@@ -28,12 +29,21 @@ const Calendar = dynamic(() => import("react-calendar"), { ssr: false });
 export default function Home() {
   const router = useRouter();
 
+  // 🔥 로그인 상태
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+  }, []);
+
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "add">("view");
   const [recipeSelectOpen, setRecipeSelectOpen] = useState(false);
 
-  const [recipeId, setRecipeId] = useState("");   // 🔥 추가
+  const [recipeId, setRecipeId] = useState("");
   const [recipeName, setRecipeName] = useState("");
   const [todo, setTodo] = useState("");
 
@@ -47,8 +57,6 @@ export default function Home() {
       setMemos(memoData);
 
       const recipeData = await getAllRecipes();
-
-      // 🔥 id 포함해서 배열로 변환
       const list = Object.entries(recipeData).map(([id, recipe]: any) => ({
         id,
         ...recipe,
@@ -86,13 +94,8 @@ export default function Home() {
 
     const newMemo = { recipeId, recipeName, todo };
 
-    await saveMemo(key, {
-      recipeId,
-      recipeName,
-      todo,
-    });
+    await saveMemo(key, newMemo);
 
-    // 화면 즉시 반영
     setMemos({
       ...memos,
       [key]: newMemo,
@@ -116,30 +119,89 @@ export default function Home() {
       }}
     >
       <h1 style={{ textAlign: "center", marginBottom: 20 }}>
-        My Recipe Calendar
+        My Meal Planner
       </h1>
 
-      {/* 레시피 관리 버튼 */}
+      {/* 로그인 버튼 (로그인 안 했을 때만) */}
+      {!user && (
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <button
+            onClick={login}
+            style={{
+              position: "fixed",
+              bottom: 20,
+              right: 20,
+              width: 55,
+              height: 55,
+              borderRadius: "50%",
+              background: "#DB4437",
+              color: "white",
+              border: "none",
+              fontSize: 22,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              zIndex: 999,
+            }}
+          >
+            👤
+          </button>
+        </div>
+      )}
+      {/* 로그인 후 버튼 (로그인 했을 때만) */}
+      {user && (
       <button
-        onClick={() => router.push("/recipe")}
+        onClick={logout}
         style={{
           position: "fixed",
           bottom: 20,
-          right: 20,
+          left: 20,
           width: 55,
           height: 55,
           borderRadius: "50%",
-          background: "#C8A2FF",
-          color: "white",
-          border: "none",
-          fontSize: 28,
+          background: "white",
+          border: "2px solid #DB4437",
           cursor: "pointer",
+          padding: 0,
+          overflow: "hidden",
           boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
           zIndex: 999,
         }}
       >
-        ➕
+        <img
+          src={user.photoURL}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
       </button>
+    )}
+
+
+      {/* 🔥 로그인해야만 기능 버튼 보임 */}
+      {user && (
+        <button
+          onClick={() => router.push("/recipe")}
+          style={{
+            position: "fixed",
+            bottom: 20,
+            right: 20,
+            width: 55,
+            height: 55,
+            borderRadius: "50%",
+            background: "#C8A2FF",
+            color: "white",
+            border: "none",
+            fontSize: 28,
+            cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            zIndex: 999,
+          }}
+        >
+          ➕
+        </button>
+      )}
 
       {/* 🔥 캘린더 tileContent → Firebase 데이터 표시 */}
       <Calendar
@@ -167,7 +229,7 @@ export default function Home() {
         }}
       />
 
-      {/* 🔥 날짜 모달 */}
+      {/* 🔥 로그인 안 했으면 모달보기만 가능 */}
       {open && (
         <div
           style={{
@@ -206,84 +268,94 @@ export default function Home() {
                       }}
                       onClick={() => {
                         const memo = memos[key];
-                        console.log("memo click:", memo);
-
                         if (!memo) return;
-
-                        // recipeId가 없으면 일단 경고라도 띄우자
                         if (!memo.recipeId) {
-                          alert("이 메모에는 recipeId가 저장되어 있지 않습니다.");
+                          alert("이 메모에는 recipeId가 없습니다.");
                           return;
                         }
-
                         router.push(`/recipe/${memo.recipeId}`);
                       }}
                     >
-                      🍱 레시피: {memos[key].recipeName}
+                      🍱 Recipe: {memos[key].recipeName}
                     </p>
 
-                    <p>📝 할 일: {memos[key].todo}</p>
+                    <p>📝 To-do: {memos[key].todo}</p>
                   </>
                 ) : (
-                  <p style={{ color: "#8e8e93" }}>메모 없음</p>
+                  <p style={{ color: "#8e8e93" }}>No notes</p>
                 )}
 
-                <button
-                  onClick={() => setRecipeSelectOpen(true)}
-                  style={{
-                    marginTop: 15,
-                    width: "100%",
-                    padding: 10,
-                    background: "#7A3FFF",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                  }}
-                >
-                  레시피 선택해서 추가
-                </button>
+                {user && (
+                  <button
+                    onClick={() => setRecipeSelectOpen(true)}
+                    style={{
+                      marginTop: 15,
+                      width: "100%",
+                      padding: 10,
+                      background: "#7A3FFF",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Select a recipe to add
+                  </button>
+                )}
               </>
             )}
 
             {mode === "add" && (
               <>
-                <p>선택한 레시피: {recipeName}</p>
-                <input
-                  placeholder="할 일"
-                  value={todo}
-                  onChange={(e) => setTodo(e.target.value)}
+                <p>Selected recipe: {recipeName}</p>
+                <div
                   style={{
                     width: "100%",
-                    padding: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
                     marginTop: 10,
-                    borderRadius: 8,
-                    border: "1px solid #ccc",
-                  }}
-                />
-                <button
-                  onClick={handleSave}
-                  style={{
-                    marginTop: 15,
-                    width: "100%",
-                    padding: 10,
-                    background: "#7A3FFF",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
                   }}
                 >
-                  저장
-                </button>
+                  <input
+                    placeholder="To-do"
+                    value={todo}
+                    onChange={(e) => setTodo(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: 45,
+                      padding: "0 12px",
+                      borderRadius: 8,
+                      border: "1px solid #ccc",
+                      fontSize: 16,
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <button
+                    onClick={handleSave}
+                    style={{
+                      width: "100%",
+                      height: 45,
+                      background: "#7A3FFF",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontSize: 16,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
               </>
             )}
           </div>
         </div>
       )}
 
-      {/* 🔥 레시피 선택 모달 */}
-      {recipeSelectOpen && (
+      {/* 🔥 레시피 선택 모달 (로그인한 경우만) */}
+      {recipeSelectOpen && user && (
         <div
           style={{
             position: "fixed",
@@ -307,10 +379,10 @@ export default function Home() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginBottom: 10 }}>레시피 선택</h3>
+            <h3 style={{ marginBottom: 10 }}>Select a recipe</h3>
 
             {recipes.length === 0 && (
-              <p style={{ color: "#888" }}>등록된 레시피가 없습니다.</p>
+              <p style={{ color: "#888" }}>No recipes available</p>
             )}
 
             {recipes.map((r) => (
@@ -324,7 +396,7 @@ export default function Home() {
                 }}
                 onClick={() => {
                   setRecipeName(r.name);
-                  setRecipeId(r.id);   // 🔥 이제 정상 작동
+                  setRecipeId(r.id);
                   setRecipeSelectOpen(false);
                   setMode("add");
                 }}

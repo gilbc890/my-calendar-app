@@ -1,5 +1,5 @@
 // src/firebase/config.ts
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
@@ -12,5 +12,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
-const app = initializeApp(firebaseConfig);
+export const app =
+  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
 export const db = getDatabase(app);
