@@ -1,5 +1,4 @@
-const nextConfig = {
-  allowedDevOrigins: [process.env.NEXT_PUBLIC_DEV_IP],
-};
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
 
 module.exports = nextConfig;
