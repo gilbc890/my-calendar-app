@@ -45,6 +45,7 @@ export default function RecipeDetailPage({ params }: PageProps) {
         maxWidth: 720,
         margin: "0 auto",
         lineHeight: 1.7,
+        fontFamily: "Inter, sans-serif",
       }}
     >
       {/* 제목 */}
@@ -78,7 +79,6 @@ export default function RecipeDetailPage({ params }: PageProps) {
       {/* 재료 */}
       <section
         style={{
-          background: "#fafafa",
           padding: 20,
           borderRadius: 12,
           marginBottom: 28,
@@ -92,7 +92,7 @@ export default function RecipeDetailPage({ params }: PageProps) {
             marginBottom: 12,
           }}
         >
-          🥕 재료
+          🥕 Ingredients
         </h2>
 
         <pre
@@ -110,7 +110,6 @@ export default function RecipeDetailPage({ params }: PageProps) {
       {/* 설명 */}
       <section
         style={{
-          background: "#fafafa",
           padding: 20,
           borderRadius: 12,
           border: "1px solid #eee",
@@ -123,7 +122,7 @@ export default function RecipeDetailPage({ params }: PageProps) {
             marginBottom: 12,
           }}
         >
-          🍳 설명
+          🍳 Description
         </h2>
 
         <pre

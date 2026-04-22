@@ -45,14 +45,15 @@ export default function RecipeListPage() {
           padding: "8px 12px",
           borderRadius: 8,
           border: "1px solid #ccc",
-          background: "white",
+          background: "#C8A2FF",
+          color: "white",
           cursor: "pointer",
         }}
       >
-        ← 캘린더로 돌아가기
+        ← Back to Calendar
       </button>
 
-      <h2 style={{ marginBottom: 20 }}>레시피 목록</h2>
+      <h2 style={{ marginBottom: 20 }}>Recipe List</h2>
 
       <button
         onClick={() => router.push("/recipe/add")}
@@ -61,13 +62,13 @@ export default function RecipeListPage() {
           padding: "10px 14px",
           borderRadius: 8,
           border: "none",
-          background: "#7A3FFF",
+          background: "#C8A2FF",
           color: "white",
           cursor: "pointer",
           width: "100%",
         }}
       >
-        ➕ 레시피 추가
+        ➕ Add Recipe
       </button>
 
       {recipes.length === 0 && <p>등록된 레시피가 없습니다.</p>}
@@ -115,7 +116,7 @@ export default function RecipeListPage() {
               cursor: "pointer",
             }}
           >
-            삭제
+            Delete
           </button>
         </div>
       ))}

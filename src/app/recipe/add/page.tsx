@@ -12,19 +12,18 @@ export default function AddRecipePage() {
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState("");
 
-  // 🔥 저장할 때 특수문자/이모티콘 제거해서 id 생성
   const makeSafeId = (text: string) => {
     return text
       .toLowerCase()
-      .replace(/[^\w\s-]/g, "")   // 이모티콘/특수문자 제거
-      .replace(/\s+/g, "-")       // 공백 → 하이픈
-      .replace(/-+/g, "-")        // 중복 하이픈 제거
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
       .trim();
   };
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert("레시피 이름을 입력해주세요.");
+      alert("Please enter a recipe name.");
       return;
     }
 
@@ -42,111 +41,102 @@ export default function AddRecipePage() {
     router.push("/recipe");
   };
 
+  // ✅ 입력칸 공통 스타일
+  const fieldStyle: React.CSSProperties = {
+    width: "100%",
+    padding: 16,
+    marginTop: 12,
+    borderRadius: 12,
+    border: "1px solid #ccc",
+    fontSize: 16,
+    lineHeight: 1.5,
+    boxSizing: "border-box",
+  };
+
   return (
     <div
       style={{
         padding: 24,
         maxWidth: 480,
         margin: "0 auto",
+        boxSizing: "border-box",
       }}
     >
-      {/* 🔙 레시피 목록으로 */}
+      {/* Back to Recipe List */}
       <button
         onClick={() => router.push("/recipe")}
         style={{
           marginBottom: 24,
           padding: "10px 14px",
           borderRadius: 10,
-          border: "1px solid #ccc",
-          background: "white",
+          border: "1px solid #7A3FFF",
+          background: "#7A3FFF",
+          color: "white",
           cursor: "pointer",
         }}
       >
-        ← 레시피 목록으로
+        ← Back to Recipe List
       </button>
 
-      <h2 style={{ marginBottom: 20 }}>레시피 추가</h2>
+      <h2 style={{ marginBottom: 20 }}>Add Recipe</h2>
 
-      {/* 이름 */}
+      {/* Name */}
       <input
-        placeholder="레시피 이름"
+        placeholder="Recipe Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        style={{
-          width: "100%",
-          padding: 16,
-          marginTop: 12,
-          borderRadius: 12,
-          border: "1px solid #ccc",
-          fontSize: 16,
-        }}
+        style={fieldStyle}
       />
 
-      {/* 재료 */}
+      {/* Ingredients */}
       <textarea
-        placeholder="재료 (줄바꿈 가능)"
+        placeholder="Ingredients (line breaks allowed)"
         value={ingredients}
         onChange={(e) => setIngredients(e.target.value)}
         style={{
-          width: "100%",
-          padding: 16,
-          marginTop: 12,
-          borderRadius: 12,
-          border: "1px solid #ccc",
+          ...fieldStyle,
           minHeight: 150,
           fontSize: 15,
-          lineHeight: 1.5,
         }}
       />
 
-      {/* 설명 */}
+      {/* Description */}
       <textarea
-        placeholder="설명"
+        placeholder="Description"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         style={{
-          width: "100%",
-          padding: 16,
-          marginTop: 12,
-          borderRadius: 12,
-          border: "1px solid #ccc",
+          ...fieldStyle,
           minHeight: 200,
           fontSize: 15,
-          lineHeight: 1.5,
         }}
       />
 
-      {/* 썸네일 */}
+      {/* Thumbnail */}
       <input
-        placeholder="썸네일 이미지 URL (선택)"
+        placeholder="Thumbnail Image URL (optional)"
         value={thumbnail}
         onChange={(e) => setThumbnail(e.target.value)}
         style={{
-          width: "100%",
-          padding: 16,
-          marginTop: 12,
-          borderRadius: 12,
-          border: "1px solid #ccc",
+          ...fieldStyle,
           fontSize: 15,
         }}
       />
 
-      {/* 저장 버튼 */}
+      {/* ✅ Save 버튼: fieldStyle 그대로 + 색만 덮어쓰기 */}
       <button
         onClick={handleSave}
         style={{
+          ...fieldStyle,
           marginTop: 24,
-          width: "100%",
-          padding: 16,
-          borderRadius: 12,
-          border: "none",
           background: "#7A3FFF",
           color: "white",
-          fontSize: 17,
+          border: "1px solid #7A3FFF",
+          fontWeight: 500,
           cursor: "pointer",
         }}
       >
-        저장
+        Save
       </button>
     </div>
   );

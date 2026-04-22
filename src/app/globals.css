@@ -20,3 +20,10 @@
     --modal-text: #ffffff;
   }
 }
+html, body {
+  background-color: #121212;
+  color: #fff;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
