@@ -205,6 +205,7 @@ export default function Home() {
 
       {/* 🔥 캘린더 tileContent → Firebase 데이터 표시 */}
       <Calendar
+        locale="en-US"
         onClickDay={handleDayClick}
         value={date}
         tileContent={({ date }) => {
